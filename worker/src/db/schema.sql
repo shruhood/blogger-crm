@@ -44,3 +44,16 @@ CREATE TABLE IF NOT EXISTS pageviews (
 
 CREATE INDEX IF NOT EXISTS idx_pageviews_blog_time ON pageviews(blog_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_posts_blog ON posts(blog_id);
+
+-- Shareable, one-time invite links used by the /join self-signup flow.
+CREATE TABLE IF NOT EXISTS invites (
+  token TEXT PRIMARY KEY,
+  email TEXT,                 -- optional: lock the link to one email address
+  role TEXT NOT NULL DEFAULT 'editor',  -- role the new user receives
+  created_by TEXT NOT NULL,
+  expires_at TEXT NOT NULL,   -- ISO timestamp
+  used_at TEXT,               -- null until consumed
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_invites_used ON invites(used_at);

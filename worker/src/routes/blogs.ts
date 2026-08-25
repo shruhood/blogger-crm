@@ -2,12 +2,21 @@ import { Hono } from "hono";
 import type { Env } from "../types";
 import { requireAuth, requireRole } from "../middleware";
 import { syncBlog } from "../integrations/sync";
+import { resolveBloggerBlogId } from "../integrations/blogger";
 
 const blogs = new Hono<{ Bindings: Env; Variables: { user: any } }>();
 
 blogs.use("*", requireAuth);
 
-// List all blogs with quick stats (post count, pageviews in last 30 days)
+// Public-ish helper (still under requireAuth) to auto-resolve a Blogger blogId
+// from a pasted site URL, so users never have to dig it out of the dashboard.
+blogs.post("/resolve", async (c) => {
+  const { url } = await c.req.json();
+  if (!url) return c.json({ error: "url is required" }, 400);
+  const blogId = await resolveBloggerBlogId(url);
+  if (!blogId) return c.json({ error: "Could not find a Blogger blogId for that URL" }, 404);
+  return c.json({ blogId, url });
+});
 blogs.get("/", async (c) => {
   const { results } = await c.env.DB.prepare(
     `SELECT b.id, b.name, b.source, b.created_at,

@@ -255,8 +255,10 @@ function renderAddBlogModal() {
   document.body.appendChild(backdrop);
 
   const fieldsFor = {
-    blogger: `<input name="apiKey" placeholder="Google Blogger API key" required />
-               <input name="blogId" placeholder="Blogger blog ID" required />`,
+    blogger: `<input name="url" placeholder="Your Blogger site URL (e.g. https://mysite.blogspot.com)" required />
+               <button type="button" class="secondary" id="resolveBtn" style="width:auto;padding:8px 12px;margin-bottom:6px;">Auto-detect blog ID</button>
+               <input name="apiKey" placeholder="Google Blogger API key" required />
+               <input name="blogId" placeholder="Blogger blog ID (auto-filled)" required />`,
     wordpress: `<input name="baseUrl" placeholder="https://yourblog.com" required />`,
     custom: `<p class="sub" style="margin-bottom:12px;">You'll get a tracking snippet to paste into your site after adding it.</p>`,
   };
@@ -266,6 +268,25 @@ function renderAddBlogModal() {
   updateFields();
   sourceSelect.onchange = updateFields;
 
+  const resolveBtn = backdrop.querySelector("#resolveBtn");
+  if (resolveBtn) {
+    resolveBtn.onclick = async () => {
+      const url = backdrop.querySelector('input[name="url"]').value;
+      if (!url) return alert("Enter your Blogger site URL first.");
+      resolveBtn.disabled = true;
+      resolveBtn.textContent = "Detecting…";
+      try {
+        const r = await api("/api/blogs/resolve", { method: "POST", body: JSON.stringify({ url }) });
+        backdrop.querySelector('input[name="blogId"]').value = r.blogId;
+        resolveBtn.textContent = "Detected!";
+      } catch (err) {
+        resolveBtn.textContent = "Auto-detect";
+        alert(err.message);
+      }
+      resolveBtn.disabled = false;
+    };
+  }
+
   backdrop.querySelector("#cancelBtn").onclick = () => backdrop.remove();
 
   backdrop.querySelector("#addBlogForm").onsubmit = async (e) => {
@@ -274,7 +295,15 @@ function renderAddBlogModal() {
     const source = fd.get("source");
     const name = fd.get("name");
     let config = {};
-    if (source === "blogger") config = { apiKey: fd.get("apiKey"), blogId: fd.get("blogId") };
+    if (source === "blogger") {
+      // Prefer an explicitly entered blogId; otherwise resolve from the URL.
+      let blogId = fd.get("blogId");
+      if (!blogId && fd.get("url")) {
+        const r = await api("/api/blogs/resolve", { method: "POST", body: JSON.stringify({ url: fd.get("url") }) });
+        blogId = r.blogId;
+      }
+      config = { apiKey: fd.get("apiKey"), blogId, url: fd.get("url") || "" };
+    }
     if (source === "wordpress") config = { baseUrl: fd.get("baseUrl") };
 
     try {
@@ -298,6 +327,14 @@ function renderInviteModal() {
   backdrop.innerHTML = `
     <div class="modal">
       <h3>Invite a teammate</h3>
+      <p class="sub">Option A — shareable signup link (recommended): send the link, they set their own password and are added automatically.</p>
+      <div style="display:flex;gap:8px;margin-bottom:6px;">
+        <input id="inviteLinkOut" readonly placeholder="Create a link below" style="flex:1;" />
+        <button type="button" class="secondary" id="copyLinkBtn" style="width:auto;padding:8px 12px;">Copy</button>
+      </div>
+      <button type="button" id="genLinkBtn" style="width:auto;padding:8px 14px;margin-bottom:14px;">+ Create invite link</button>
+      <hr style="border-color:rgba(255,255,255,.1);margin:14px 0;" />
+      <p class="sub">Option B — manual invite (temporary password):</p>
       <form id="inviteForm">
         <input name="email" type="email" placeholder="Email" required />
         <input name="password" type="password" placeholder="Temporary password (min 8 chars)" required minlength="8" />
@@ -313,6 +350,25 @@ function renderInviteModal() {
     </div>`;
   document.body.appendChild(backdrop);
   backdrop.querySelector("#cancelInvite").onclick = () => backdrop.remove();
+
+  backdrop.querySelector("#genLinkBtn").onclick = async () => {
+    try {
+      const role = backdrop.querySelector('select[name="role"]').value || "editor";
+      const data = await api("/api/auth/invite-link", { method: "POST", body: JSON.stringify({ role }) });
+      const link = `${location.origin}/#/join?token=${data.token}`;
+      backdrop.querySelector("#inviteLinkOut").value = link;
+      alert("Invite link ready — share it. It can be used once and expires in 7 days.");
+    } catch (err) {
+      const errEl = backdrop.querySelector("#inviteError");
+      errEl.textContent = err.message;
+      errEl.style.display = "block";
+    }
+  };
+  backdrop.querySelector("#copyLinkBtn").onclick = () => {
+    const v = backdrop.querySelector("#inviteLinkOut").value;
+    if (v) { navigator.clipboard?.writeText(v); backdrop.querySelector("#copyLinkBtn").textContent = "Copied!"; }
+  };
+
   backdrop.querySelector("#inviteForm").onsubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -331,6 +387,69 @@ function renderInviteModal() {
   };
 }
 
+// ---------- Join (self-signup via shareable link) ----------
+function renderJoin() {
+  // Token is in the URL hash (e.g. #/join?token=...), so static Pages serves
+  // the SPA without needing server-side rewrites.
+  const hash = location.hash.replace(/^#/, "") || location.search;
+  const params = new URLSearchParams(hash.startsWith("/") ? hash.slice(hash.indexOf("?") + 1) : hash);
+  const token = params.get("token");
+  app.innerHTML = `
+    <div class="center-screen">
+      <form class="card" id="joinForm">
+        <h1>Join Blogger CRM</h1>
+        <p class="sub" id="joinSub">Set up your account via the invite link.</p>
+        ${state.error ? `<div class="error">${state.error}</div>` : ""}
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Choose a password (min 8 chars)" required minlength="8" />
+        <label style="display:flex;align-items:center;gap:8px;margin:6px 0 2px;font-size:13px;opacity:.85;">
+          <input type="checkbox" name="connectBlog" checked /> Also connect my Blogger site now
+        </label>
+        <div id="blogFields">
+          <input name="blogUrl" placeholder="Your Blogger site URL (e.g. https://mysite.blogspot.com)" />
+          <input name="apiKey" placeholder="Google Blogger API key" />
+          <p class="sub" style="margin-top:4px;">We auto-detect your blog ID from the URL. Get an API key at Google Cloud console → enable "Blogger API v3".</p>
+        </div>
+        <button type="submit">Create account</button>
+      </form>
+    </div>`;
+
+  const blogFields = document.getElementById("blogFields");
+  const connectBox = document.querySelector('input[name="connectBlog"]');
+  const toggleBlog = () => (blogFields.style.display = connectBox.checked ? "block" : "none");
+  connectBox.onchange = toggleBlog;
+  toggleBlog();
+
+  if (token) {
+    api(`/api/auth/invite/${token}`)
+      .then((d) => { if (d.email) document.querySelector('input[name="email"]').value = d.email; })
+      .catch(() => { document.getElementById("joinSub").textContent = "This invite link is invalid or expired."; });
+  } else {
+    document.getElementById("joinSub").textContent = "Missing invite token in the link.";
+  }
+
+  document.getElementById("joinForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const blog = connectBox.checked
+      ? { url: fd.get("blogUrl"), apiKey: fd.get("apiKey") }
+      : null;
+    try {
+      const data = await api("/api/auth/join", {
+        method: "POST",
+        body: JSON.stringify({ token, email: fd.get("email"), password: fd.get("password"), blog }),
+      });
+      setToken(data.token, data.user);
+      state.error = null;
+      alert("Welcome! Your account is ready" + (data.blog ? " and your Blogger site was connected." : "."));
+      render("dashboard");
+    } catch (err) {
+      state.error = err.message;
+      renderJoin();
+    }
+  };
+}
+
 function wireTopbar() {
   const btn = document.getElementById("logoutBtn");
   if (btn) btn.onclick = logout;
@@ -340,10 +459,14 @@ function render(view) {
   state.view = view;
   if (view === "login") renderLogin(false);
   if (view === "dashboard") renderDashboard();
+  if (view === "join") renderJoin();
 }
 
 // ---------- Boot ----------
-if (state.token && state.user) {
+const _bootHash = location.hash.replace(/^#/, "");
+if (_bootHash.startsWith("/join")) {
+  render("join");
+} else if (state.token && state.user) {
   render("dashboard");
 } else {
   render("login");
