@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+worker/node_modules/
+
+# Wrangler / Miniflare local state (includes local D1 sqlite, caches)
+.wrangler/
+.mf/
+worker/.wrangler/
+worker/.mf/
+
+# Local dev databases
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env / secrets
+.env
+.dev.vars

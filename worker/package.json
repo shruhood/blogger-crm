@@ -1,0 +1,19 @@
+{
+  "name": "blogger-crm-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create blogger_crm_db",
+    "db:init": "wrangler d1 execute blogger_crm_db --local --file=./src/db/schema.sql",
+    "db:init:remote": "wrangler d1 execute blogger_crm_db --remote --file=./src/db/schema.sql"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "wrangler": "^3.78.0"
+  },
+  "dependencies": {
+    "hono": "^4.13.4"
+  }
+}

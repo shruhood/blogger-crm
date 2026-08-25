@@ -1,0 +1,19 @@
+name = "blogger-crm-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Free tier: D1 database (SQLite at the edge)
+[[d1_databases]]
+binding = "DB"
+database_name = "blogger_crm_db"
+database_id = "6215b2e4-ab5e-41e0-b9fe-5ce1cf063667"
+
+# Runs hourly to pull new posts from connected blogs (Blogger / WordPress)
+[triggers]
+crons = ["0 * * * *"]
+
+[vars]
+# JWT_SECRET is set via `wrangler secret put JWT_SECRET` (never stored in this file)
+# Comma-separated list of origins allowed to call this API (your Pages URL(s))
+ALLOWED_ORIGINS = "http://localhost:8788,https://blogger-crm.pages.dev"

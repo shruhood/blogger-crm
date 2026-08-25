@@ -1,0 +1,124 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --border: #262b36;
+  --text: #e8eaed;
+  --muted: #8a90a2;
+  --accent: #5b8cff;
+  --accent-soft: rgba(91, 140, 255, 0.12);
+  --danger: #ff5b6e;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#app { min-height: 100vh; }
+
+.center-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.card h1 { font-size: 20px; margin: 0 0 4px; }
+.card p.sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+
+input, select {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: #0d0f14;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+button {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+button.danger { background: var(--danger); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error { color: var(--danger); font-size: 13px; margin: -4px 0 12px; }
+.link-btn { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0; width: auto; font-size: 13px; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px; border-bottom: 1px solid var(--border);
+}
+.topbar .brand { font-weight: 700; }
+.topbar .right { display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--muted); }
+
+.container { max-width: 1080px; margin: 0 auto; padding: 24px; }
+
+.row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.row h2 { margin: 0; font-size: 18px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+
+.blog-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; cursor: pointer; transition: border-color 0.15s;
+}
+.blog-card:hover { border-color: var(--accent); }
+.blog-card .name { font-weight: 600; margin-bottom: 4px; }
+.blog-card .source-tag {
+  display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 100px;
+  background: var(--accent-soft); color: var(--accent); margin-bottom: 10px;
+}
+.blog-card .stats { display: flex; gap: 16px; font-size: 13px; color: var(--muted); }
+.blog-card .stats b { color: var(--text); }
+
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 10;
+}
+.modal { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 440px; }
+.modal h3 { margin-top: 0; }
+
+.back-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 0; margin-bottom: 14px; width: auto; }
+
+.snippet-box {
+  background: #0d0f14; border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px; font-family: monospace; font-size: 12px; color: var(--muted);
+  white-space: pre-wrap; word-break: break-all; margin: 10px 0;
+}
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; }
+a { color: var(--accent); }
+
+.chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 120px; margin: 16px 0; }
+.chart-bar { flex: 1; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 2px; }
+
+.empty { color: var(--muted); text-align: center; padding: 40px 0; }
+.role-badge { text-transform: capitalize; font-size: 12px; background: var(--accent-soft); color: var(--accent); padding: 2px 8px; border-radius: 100px; }
