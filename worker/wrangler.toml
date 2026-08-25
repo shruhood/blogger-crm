@@ -16,4 +16,4 @@ crons = ["0 * * * *"]
 [vars]
 # JWT_SECRET is set via `wrangler secret put JWT_SECRET` (never stored in this file)
 # Comma-separated list of origins allowed to call this API (your Pages URL(s))
-ALLOWED_ORIGINS = "http://localhost:8788,https://blogger-crm.pages.dev"
+ALLOWED_ORIGINS = "http://localhost:8788,https://blogger-crm.pages.dev,https://0711300d.blogger-crm.pages.dev"
