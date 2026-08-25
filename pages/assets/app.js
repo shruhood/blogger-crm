@@ -257,7 +257,7 @@ function renderAddBlogModal() {
   const fieldsFor = {
     blogger: `<input name="url" placeholder="Your Blogger site URL (e.g. https://mysite.blogspot.com)" required />
                <button type="button" class="secondary" id="resolveBtn" style="width:auto;padding:8px 12px;margin-bottom:6px;">Auto-detect blog ID</button>
-               <input name="apiKey" placeholder="Google Blogger API key" required />
+               <input name="apiKey" placeholder="Google Blogger API key (optional — add later to enable sync)" />
                <input name="blogId" placeholder="Blogger blog ID (auto-filled)" required />`,
     wordpress: `<input name="baseUrl" placeholder="https://yourblog.com" required />`,
     custom: `<p class="sub" style="margin-bottom:12px;">You'll get a tracking snippet to paste into your site after adding it.</p>`,

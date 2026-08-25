@@ -134,7 +134,7 @@ auth.post("/join", async (c) => {
   await c.env.DB.prepare(`UPDATE invites SET used_at = datetime('now') WHERE token = ?`).bind(token).run();
 
   let connectedBlog = null;
-  if (blog && blog.url && blog.apiKey) {
+  if (blog && blog.url) {
     const blogId = await resolveBloggerBlogId(blog.url);
     if (!blogId) {
       // Still let the user in; surface the warning so they can add the blog later.
@@ -144,12 +144,13 @@ auth.post("/join", async (c) => {
         201
       );
     }
-    const name = (await fetchBloggerTitle(blog.apiKey, blogId)) || String(email).split("@")[0] + "'s Blogger";
+    const apiKey = blog.apiKey || "";
+    const name = (apiKey ? await fetchBloggerTitle(apiKey, blogId) : null) || String(email).split("@")[0] + "'s Blogger";
     const blogRowId = crypto.randomUUID();
     await c.env.DB.prepare(
       `INSERT INTO blogs (id, name, source, config, webhook_token, owner_id) VALUES (?, ?, 'blogger', ?, NULL, ?)`
     )
-      .bind(blogRowId, name, JSON.stringify({ apiKey: blog.apiKey, blogId }), userId)
+      .bind(blogRowId, name, JSON.stringify({ apiKey, blogId }), userId)
       .run();
     connectedBlog = { id: blogRowId, name, blogId };
     return c.json(await issueJoinResult(c, userId, email, inv.role as string, connectedBlog, null), 201);
